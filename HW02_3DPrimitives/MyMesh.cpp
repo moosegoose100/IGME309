@@ -60,9 +60,42 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// Tip Point Of Cone
+	vector3 coneTip = ZERO_V3;
+	coneTip.z += a_fHeight/2;
+
+	// Center of Base
+	vector3 baseCenter = ZERO_V3;
+	baseCenter.z -= a_fHeight / 2;
+
+	// Vector To Hold All Vertices in "Circle"
+	std::vector<vector3> vertices;
+
+	// Variables For Unit Circle
+	GLfloat theta = 0; // Storing Additive Angle Change Each Iteration
+
+	// Divide Full Circle (2pi) Equally Into Specific Number of Subdivisions
+	GLfloat delta = static_cast<GLfloat>((2.0f * PI) / static_cast<GLfloat>(a_nSubdivisions));
+
+	// For Each Subdivision, Push A New Vertex, Using Unit Circle For Each New Position
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// (x,y) = (cos*rad, sin*rad)
+		vector3 current = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, -(a_fHeight/2));
+
+		// Push To Vector List Of Verticies
+		vertices.push_back(current);
+
+		// Increment Theta To Next Angle Around Circle
+		theta += delta;
+	}
+
+	// Loop Through Newly Calculated Vertices
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		// Make Quads Around The Axis
+		AddQuad(baseCenter, vertices[i], vertices[(i + 1) % a_nSubdivisions], coneTip);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -84,9 +117,57 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// Locations For Center Of Each Base
+	vector3 bottomCenter = ZERO_V3;
+	bottomCenter.z = -a_fHeight/2;
+
+	vector3 topCenter = ZERO_V3;
+	topCenter.z = a_fHeight/2;
+
+	// Vector To Hold All Vertices in Each "Circle"
+	std::vector<vector3> bottomVertices;
+	std::vector<vector3> topVertices;
+
+	// Variables For Unit Circle
+	GLfloat theta = 0; // Storing Additive Angle Change Each Iteration
+
+	// Divide Full Circle (2pi) Equally Into Specific Number of Subdivisions
+	GLfloat delta = static_cast<GLfloat>((2.0f * PI) / static_cast<GLfloat>(a_nSubdivisions));
+
+	// For Each Subdivision, Push A New Vertex, Using Unit Circle For Each New Position
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// (x,y) = (cos*rad, sin*rad)
+		vector3 currentBottom = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, bottomCenter.z);
+		vector3 currentTop = vector3(cos(theta) * a_fRadius, sin(theta) * a_fRadius, topCenter.z);
+
+		// Push To Vector List Of Vertices
+		bottomVertices.push_back(currentBottom);
+		topVertices.push_back(currentTop);
+
+		// Increment Theta To Next Angle Around Circle
+		theta += delta;
+	}
+
+	// Loop Through Newly Calculated Vertices for Bottom Circle
+	for (int i = 0; i < bottomVertices.size(); i++)
+	{
+		// Form Triangles For Each From Base Center and Next Index (Looping Back To 0 At End)
+		AddTri(bottomCenter, bottomVertices[(i + 1) % a_nSubdivisions], bottomVertices[i]);
+	}
+
+	// Loop Through Newly Calculated Vertices for Top Circle
+	for (int i = 0; i < topVertices.size(); i++)
+	{
+		// Form Triangles For Each From Top Center and Next Index (Looping Back To 0 At End)
+		AddTri(topCenter, topVertices[i], topVertices[(i + 1) % a_nSubdivisions]);
+	}
+
+	// Loop Through Each Subdivision To Connect Top and Bottom Vertices with Quads
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddQuad(bottomVertices[i], bottomVertices[(i + 1) % a_nSubdivisions], topVertices[i], topVertices[(i + 1) % a_nSubdivisions]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -114,9 +195,67 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// Locations For Center Of Each Base
+	vector3 bottomCenter = ZERO_V3;
+	bottomCenter.z = -a_fHeight / 2;
+
+	vector3 topCenter = ZERO_V3;
+	topCenter.z = a_fHeight / 2;
+
+	// Vector To Hold All Vertices in Each "Circle"
+	std::vector<vector3> bottomVerticesOuter;
+	std::vector<vector3> topVerticesOuter;
+	std::vector<vector3> bottomVerticesInner;
+	std::vector<vector3> topVerticesInner;
+
+	// Variables For Unit Circle
+	GLfloat theta = 0; // Storing Additive Angle Change Each Iteration
+
+	// Divide Full Circle (2pi) Equally Into Specific Number of Subdivisions
+	GLfloat delta = static_cast<GLfloat>((2.0f * PI) / static_cast<GLfloat>(a_nSubdivisions));
+
+	// For Each Subdivision, Push A New Vertex, Using Unit Circle For Each New Position
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// (x,y) = (cos*rad, sin*rad)
+		vector3 currentBottomOuter = vector3(cos(theta) * a_fOuterRadius, sin(theta) * a_fOuterRadius, bottomCenter.z);
+		vector3 currentTopOuter = vector3(cos(theta) * a_fOuterRadius, sin(theta) * a_fOuterRadius, topCenter.z);
+		vector3 currentBottomInner = vector3(cos(theta) * a_fInnerRadius, sin(theta) * a_fInnerRadius, bottomCenter.z);
+		vector3 currentTopInner = vector3(cos(theta) * a_fInnerRadius, sin(theta) * a_fInnerRadius, topCenter.z);
+
+		// Push To Vector List Of Vertices
+		bottomVerticesOuter.push_back(currentBottomOuter);
+		topVerticesOuter.push_back(currentTopOuter);
+		bottomVerticesInner.push_back(currentBottomInner);
+		topVerticesInner.push_back(currentTopInner);
+
+		// Increment Theta To Next Angle Around Circle
+		theta += delta;
+	}
+
+	// Loop Through Newly Calculated Vertices for Bottom Circle Base
+	for (int i = 0; i < bottomVerticesOuter.size(); i++)
+	{
+		// Form Triangles For Each From Base Center and Next Index (Looping Back To 0 At End)
+		AddQuad(bottomVerticesOuter[(i + 1) % a_nSubdivisions], bottomVerticesOuter[i], bottomVerticesInner[(i + 1) % a_nSubdivisions], bottomVerticesInner[i]);
+	}
+
+	// Loop Through Newly Calculated Vertices for Top Outer Circle
+	for (int i = 0; i < topVerticesOuter.size(); i++)
+	{
+		// Form Triangles For Each From Base Center and Next Index (Looping Back To 0 At End)
+		AddQuad(topVerticesInner[(i + 1) % a_nSubdivisions], topVerticesInner[i], topVerticesOuter[(i + 1) % a_nSubdivisions], topVerticesOuter[i]);
+	}
+
+	// Loop Through Each Subdivision To Connect Top and Bottom Vertices with Quads (Both Inner And Outer)
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		// Inner
+		AddQuad(bottomVerticesInner[(i + 1) % a_nSubdivisions], bottomVerticesInner[i], topVerticesInner[(i + 1) % a_nSubdivisions], topVerticesInner[i]);
+
+		// Outer
+		AddQuad(topVerticesOuter[(i + 1) % a_nSubdivisions], topVerticesOuter[i], bottomVerticesOuter[(i + 1) % a_nSubdivisions], bottomVerticesOuter[i]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -146,9 +285,69 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// Variables For Unit Circle
+	GLfloat thetaA = 0;
+	GLfloat thetaB = 0;
+
+	// Divide Full Circle (2pi) Equally Into Specific Number of Subdivisions
+	GLfloat deltaA = static_cast<GLfloat>((2.0f * PI) / static_cast<GLfloat>(a_nSubdivisionsA));
+	GLfloat deltaB = static_cast<GLfloat>((2.0f * PI) / static_cast<GLfloat>(a_nSubdivisionsB));
+
+	// Get Radius of Tube
+	GLfloat tubeRadius = a_fOuterRadius - a_fInnerRadius;
+
+	// Loop Through All Subdivisions, Chunking by Each Of The Opposite Subdivisions
+	// All B Subdivisions Between 2 A Subdivisions, Then Move To Same With Next 2 A Subdivisions
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		GLfloat nextThetaA = thetaA + deltaA; // Next Theta A Value Will Help Find One Of Four Points in the Quad
+
+		for (int j = 0; j < a_nSubdivisionsB; j++)
+		{
+			GLfloat nextThetaB = thetaB + deltaB; // Next Theta B Value Will Help Find One Of Four Points in the Quad
+		
+			// Generate Points For The Current Quad To Be Added To Mesh
+			// X Position - (tubeRadius * cos(thetaB)) + Outer Raidus is Distance, Multiply By cos(thetaA) to get X Coord
+			float x = ((tubeRadius * std::cos(thetaB)) + a_fOuterRadius) * std::cos(thetaA);
+			// Y Position - Same As X but with sin(thetaA) To Get Vertical Value for Y Pos
+			float y = ((tubeRadius * std::cos(thetaB)) + a_fOuterRadius) * std::sin(thetaA);
+			// Z Position - Simply use Inside Of Ring And Sin of the thetaB To Get Vertical Component
+			float z = tubeRadius * std::sin(thetaB);
+
+			// Put It All Together Into A Vertex
+			vector3 vertex1 = vector3(x, y, z);
+
+			// New X Y Z Values Using Alternating Future Theta Values For 3 More Points In Quad
+			x = ((tubeRadius * std::cos(thetaB)) + a_fOuterRadius) * std::cos(nextThetaA);
+			y = ((tubeRadius * std::cos(thetaB)) + a_fOuterRadius) * std::sin(nextThetaA);
+			z = tubeRadius * std::sin(thetaB);
+
+			// Put It All Together Into A Vertex
+			vector3 vertex2 = vector3(x, y, z);
+
+			// New X Y Z Values Using Alternating Future Theta Values For 2 More Points In Quad
+			x = ((tubeRadius * std::cos(nextThetaB)) + a_fOuterRadius) * std::cos(thetaA);
+			y = ((tubeRadius * std::cos(nextThetaB)) + a_fOuterRadius) * std::sin(thetaA);
+			z = tubeRadius * std::sin(nextThetaB);
+
+			// Put It All Together Into A Vertex
+			vector3 vertex3 = vector3(x, y, z);
+
+			// New X Y Z Values Using Alternating Future Theta Values For Last Point
+			x = ((tubeRadius * std::cos(nextThetaB)) + a_fOuterRadius) * std::cos(nextThetaA);
+			y = ((tubeRadius * std::cos(nextThetaB)) + a_fOuterRadius) * std::sin(nextThetaA);
+			z = tubeRadius * std::sin(nextThetaB);
+
+			// Put It All Together Into A Vertex
+			vector3 vertex4 = vector3(x, y, z);
+
+			// Add The Quad
+			AddQuad(vertex1, vertex2, vertex3, vertex4);
+
+			thetaB = nextThetaB;
+		}
+		thetaA = nextThetaA;
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -169,11 +368,7 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		a_nSubdivisions = 6;
 
 	Release();
-	Init();
-
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	Init();	
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
