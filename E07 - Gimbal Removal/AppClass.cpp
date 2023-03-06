@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	////Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Mustafa Elfayoumi - mte1124@rit.edu";
 	vector3 v3Position(0.0f, 0.0f, 10.0f);
 	vector3 v3Target = ZERO_V3;
 	vector3 v3Upward = AXIS_Y;
@@ -25,24 +25,31 @@ void Application::Update(void)
 
 	//Add objects to render list
 	m_pEntityMngr->AddEntityToRenderList(-1, true);
+
+	// Add Clock With Elapsed Time And Delta Time
+	static unsigned int clock = m_pSystem->GenClock();
+	float timer = m_pSystem->GetTimeSinceStart(clock);
+	float delta = m_pSystem->GetDeltaTime(clock);
 }
 void Application::Display(void)
 {
 	// Clear the screen
 	ClearScreen();
 
+
+	/*  NOT NEEDED ANYMORE
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix();
 	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix();
 
 	m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
 	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
 	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
-	/*
-	* The following line was replaced by the model manager so we can see a model instead of a cone
-	*/
+	
+	//The following line was replaced by the model manager so we can see a model instead of a cone
+	
 	//m_pMesh->Render(m4Projection, m4View, ToMatrix4(m_m4Model));
 	m_pModelMngr->AddModelToRenderList(m_sSteve, m_m4Model);
-
+	*/
 
 	// draw a skybox
 	m_pModelMngr->AddSkyboxToRenderList();
