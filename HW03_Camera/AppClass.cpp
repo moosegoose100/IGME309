@@ -1,7 +1,7 @@
 #include "AppClass.h"
 void Application::InitVariables(void)
 {
-	////Change this to your name and email
+	//// Change this to your name and email
 	m_sProgrammer = "Mustafa Elfayoumi - mte1124@rit.edu";
 	vector3 v3Position(0.0f, 15.0f, 25.0f);
 	vector3 v3Target = ZERO_V3;
