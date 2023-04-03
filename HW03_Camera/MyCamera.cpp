@@ -10,6 +10,7 @@ void MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3 a_v3Targ
 	m_v3Target = a_v3Target;
 	m_v3Upward = a_v3Upward;
 
+	// Get Forward Vector Using Position From Target
 	m_v3Forward = glm::normalize(m_v3Target - m_v3Position);
 
 	// Right Vector Is Cross Product Of 
