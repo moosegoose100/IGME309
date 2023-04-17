@@ -28,7 +28,7 @@ class Application
 	String m_sSteve = ""; //Name of the Steve Model
 	
 private:
-	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	String m_sProgrammer = "Mustafa Elfayoumi - mte1124@rit.edu";
 	static ImGuiObject gui; //GUI object
 
 	uint m_uRenderCallCount = 0; //count of render calls per frame

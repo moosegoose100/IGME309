@@ -6,6 +6,152 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//TODO: Calculate the SAT algorithm I STRONGLY suggest you use the
 	//Real Time Collision detection algorithm for OBB here but feel free to
 	//implement your own solution.
+	
+	// Declare Variables To Hold Projection Of OBBs Onto Seperating Axes
+	float ra, rb;
+
+	// Rotation Matrices
+	glm::mat3 rotationMat; // Matrix That Transforms a_pOther Into Same Coordinate Frame
+	glm::mat3 absRotationMat; // Same But With Absolute Values To Make Make Calculations Easier
+
+	// Translation Vector From This to Other
+	vector3 trans = a_pOther->GetCenterGlobal() - GetCenterGlobal();
+	trans = vector3(glm::dot(trans, vector3(m_m4ToWorld[0].x, m_m4ToWorld[0].y, m_m4ToWorld[0].z)),
+		glm::dot(trans, vector3(m_m4ToWorld[1].x, m_m4ToWorld[1].y, m_m4ToWorld[1].z)),
+		glm::dot(trans, vector3(m_m4ToWorld[2].x, m_m4ToWorld[2].y, m_m4ToWorld[2].z)));
+
+	// Compute Rotation Matrix To Express Other In This Coordinate Frame
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			rotationMat[i][j] = glm::dot(vector3(m_m4ToWorld[i].x, m_m4ToWorld[i].y, m_m4ToWorld[i].z), vector3(a_pOther->m_m4ToWorld[j].x, a_pOther->m_m4ToWorld[j].y, a_pOther->m_m4ToWorld[j].z));
+		}
+	}
+
+	// Absolute Value Matrix
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			absRotationMat[i][j] = abs(rotationMat[i][j]) + DBL_EPSILON;
+		}
+	}
+
+	// Test The Three Axes Of Each Object
+	// This Object A0, A1, A2
+	for (int i = 0; i < 3; i++)
+	{
+		ra = GetCenterGlobal()[i];
+		rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[i][0] +
+			a_pOther->GetCenterGlobal()[1] * absRotationMat[i][1] +
+			a_pOther->GetCenterGlobal()[2] * absRotationMat[i][2];
+
+		if (abs(trans[i]) < ra + rb)
+		{
+			return i + 1;
+		}
+	}
+
+	//a_pOther Axes B0, B1, B2
+	for (int i = 0; i < 3; i++)
+	{
+		rb = a_pOther->GetCenterGlobal()[i];
+		rb = GetCenterGlobal()[0] * absRotationMat[i][0] +
+			GetCenterGlobal()[1] * absRotationMat[i][1] +
+			GetCenterGlobal()[2] * absRotationMat[i][2];
+
+		if (abs(trans[0] * rotationMat[0][i] +
+			trans[1] * rotationMat[1][i] +
+			trans[2] * rotationMat[2][i]) < ra + rb)
+		{
+			return i + 4;
+		}
+	}
+
+	// Test Cross Products
+	// A0 x B0
+	ra = GetCenterGlobal()[1] * absRotationMat[2][0] + GetCenterGlobal()[2] * absRotationMat[1][0];
+	rb = a_pOther->GetCenterGlobal()[1] * absRotationMat[0][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[0][1];
+	
+	if (abs(trans[2] * rotationMat[1][0] - trans[1] * rotationMat[2][0]) < ra + rb)
+	{
+		return 8;
+	}
+
+	// A0 x B1
+	ra = GetCenterGlobal()[1] * absRotationMat[2][1] + GetCenterGlobal()[2] * absRotationMat[1][1];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[0][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[0][0];
+
+	if (abs(trans[2] * rotationMat[1][1] - trans[1] * rotationMat[2][1]) < ra + rb)
+	{
+		return 9;
+	}
+
+	// A0 x B2
+	ra = GetCenterGlobal()[1] * absRotationMat[2][2] + GetCenterGlobal()[2] * absRotationMat[1][2];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[0][1] + a_pOther->GetCenterGlobal()[1] * absRotationMat[0][0];
+
+	if (abs(trans[2] * rotationMat[1][2] - trans[1] * rotationMat[2][2]) < ra + rb)
+	{
+		return 10;
+	}
+
+	// A1 x B0
+	ra = GetCenterGlobal()[0] * absRotationMat[2][0] + GetCenterGlobal()[2] * absRotationMat[0][0];
+	rb = a_pOther->GetCenterGlobal()[1] * absRotationMat[1][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[1][1];
+
+	if (abs(trans[0] * rotationMat[2][0] - trans[2] * rotationMat[0][0]) < ra + rb)
+	{
+		return 11;
+	}
+
+	// A1 x B1
+	ra = GetCenterGlobal()[0] * absRotationMat[2][1] + GetCenterGlobal()[2] * absRotationMat[0][1];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[1][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[1][0];
+
+	if (abs(trans[0] * rotationMat[2][1] - trans[2] * rotationMat[0][1]) < ra + rb)
+	{
+		return 12;
+	}
+
+	// A1 x B2
+	ra = GetCenterGlobal()[0] * absRotationMat[2][2] + GetCenterGlobal()[2] * absRotationMat[0][2];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[1][1] + a_pOther->GetCenterGlobal()[1] * absRotationMat[1][0];
+
+	if (abs(trans[0] * rotationMat[2][2] - trans[2] * rotationMat[0][2]) < ra + rb)
+	{
+		return 13;
+	}
+
+	// A2 x B0
+	ra = GetCenterGlobal()[0] * absRotationMat[1][0] + GetCenterGlobal()[1] * absRotationMat[0][0];
+	rb = a_pOther->GetCenterGlobal()[1] * absRotationMat[2][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[2][1];
+
+	if (abs(trans[1] * rotationMat[0][1] - trans[0] * rotationMat[1][1]) < ra + rb)
+	{
+		return 14;
+	}
+
+	// A2 x B1
+	ra = GetCenterGlobal()[0] * absRotationMat[1][1] + GetCenterGlobal()[1] * absRotationMat[0][1];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[2][2] + a_pOther->GetCenterGlobal()[2] * absRotationMat[2][0];
+
+	if (abs(trans[1] * rotationMat[0][1] - trans[0] * rotationMat[1][1]) < ra + rb)
+	{
+		return 15;
+	}
+
+	// A2 x B2
+	ra = GetCenterGlobal()[0] * absRotationMat[1][2] + GetCenterGlobal()[1] * absRotationMat[0][2];
+	rb = a_pOther->GetCenterGlobal()[0] * absRotationMat[2][1] + a_pOther->GetCenterGlobal()[1] * absRotationMat[2][0];
+
+	if (abs(trans[1] * rotationMat[0][2] - trans[0] * rotationMat[1][2]) < ra + rb)
+	{
+		return 16;
+	}
+
+	// No Planes Found
 	return BTXs::eSATResults::SAT_NONE;
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
@@ -21,7 +167,7 @@ bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 	{
 		uint nResult = SAT(a_pOther);
 
-		if (bColliding) //The SAT shown they are colliding
+		if (nResult != 0) //The SAT shown they are colliding
 		{
 			this->AddCollisionWith(a_pOther);
 			a_pOther->AddCollisionWith(this);
