@@ -2,7 +2,7 @@
 void Application::InitVariables(void)
 {
 	////Change this to your name and email
-	m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	m_sProgrammer = "Mustafa Elfayoumi - mte1124@rit.edu";
 	vector3 v3Position(0.0f, 0.0f, 100.0f);
 	vector3 v3Target(0.0f, 0.0f, 99.0f);
 	vector3 v3Upward = AXIS_Y;
@@ -78,6 +78,9 @@ void Application::Display(void)
 }
 void Application::Release(void)
 {
+	// Release Octree
+	SafeDelete(m_pRoot);
+
 	//release GUI
 	ShutdownGUI();
 }
