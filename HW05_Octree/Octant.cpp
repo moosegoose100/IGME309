@@ -24,12 +24,22 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 	//want in it, remember each subdivision will create 8 children for this octant but not all children
 	//of those children will have children of their own
 
-	//The following is a made-up size, you need to make sure it is measuring all the object boxes in the world
+	// Stores Minimums and Maximums of Rigid Body Around All Blocks
 	std::vector<vector3> lMinMax;
-	lMinMax.push_back(vector3(-50.0f));
-	lMinMax.push_back(vector3(25.0f));
-	RigidBody pRigidBody = RigidBody(lMinMax);
 
+	// Loop To Populate Mins and Maxs
+	for (int i = 0; i < m_pEntityMngr->GetEntityCount(); i++)
+	{
+		// Get The Rigid Body For The Entity At This Index
+		RigidBody* tempBody = m_pEntityMngr->GetEntity(i)->GetRigidBody();
+
+		// Push Min and Max Values
+		lMinMax.push_back(tempBody->GetMinGlobal());
+		lMinMax.push_back(tempBody->GetMaxGlobal());
+	}
+
+	// Create The Main Rigid Body
+	RigidBody pRigidBody = RigidBody(lMinMax);
 
 	//The following will set up the values of the octant, make sure the are right, the rigid body at start
 	//is NOT fine, it has made-up values
@@ -72,6 +82,76 @@ void Octant::Subdivide(void)
 		return;
 
 	//Subdivide the space and allocate 8 children
+	//Set Children To 8 So That The Node Won't Subdivide Again
+	m_uChildren = 8;
+
+	// Variable To Change Center For Each Child Without Changing Parent Center
+	vector3 octCenter = m_v3Center;
+
+	// Go Through And Create Children Individually
+
+	// Child 0 - Top, Right, Front (+X, +Y, +Z)
+	octCenter.x += m_fSize / 4;
+	octCenter.y += m_fSize / 4;
+	octCenter.z += m_fSize / 4;
+	m_pChild[0] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 1 - Bottom, Right, Front (+X, -Y, +Z)
+	octCenter.x += m_fSize / 4;
+	octCenter.y -= m_fSize / 4;
+	octCenter.z += m_fSize / 4;
+	m_pChild[1] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 2 - Bottom, Left, Front (-X, -Y, +Z)
+	octCenter.x -= m_fSize / 4;
+	octCenter.y -= m_fSize / 4;
+	octCenter.z += m_fSize / 4;
+	m_pChild[2] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 3 - Top, Left, Front (-X, +Y, +Z)
+	octCenter.x -= m_fSize / 4;
+	octCenter.y += m_fSize / 4;
+	octCenter.z += m_fSize / 4;
+	m_pChild[3] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 4 - Top, Right, Back (+X, +Y, -Z)
+	octCenter.x += m_fSize / 4;
+	octCenter.y += m_fSize / 4;
+	octCenter.z -= m_fSize / 4;
+	m_pChild[4] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 5 - Bottom, Right, Back (+X, -Y, -Z)
+	octCenter.x += m_fSize / 4;
+	octCenter.y -= m_fSize / 4;
+	octCenter.z -= m_fSize / 4;
+	m_pChild[5] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 6 - Bottom, Left, Back (-X, -Y, -Z)
+	octCenter.x -= m_fSize / 4;
+	octCenter.y -= m_fSize / 4;
+	octCenter.z -= m_fSize / 4;
+	m_pChild[6] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
+	octCenter = m_v3Center; // Reset Center For Next Calculation
+
+	// Child 7 - Top, Left, Back (-X, +Y, -Z)
+	octCenter.x -= m_fSize / 4;
+	octCenter.y += m_fSize / 4;
+	octCenter.z -= m_fSize / 4;
+	m_pChild[7] = new Octant(octCenter, (m_fSize / 2)); // New Child Has Half The Width Of Parent
+
 }
 bool Octant::ContainsAtLeast(uint a_nEntities)
 {
